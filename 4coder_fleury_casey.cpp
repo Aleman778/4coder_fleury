@@ -50,19 +50,20 @@ CUSTOM_DOC("Standardizes line endings and tabs, then saves the active buffer.")
     save(app);
 }
 
-CUSTOM_COMMAND_SIG(casey_switch_to_keybinding_0)
-CUSTOM_DOC("WENSLEYDALE.")
-{
-	switch_to_keybinding_0(app);
-	global_hide_region_boundary = true;
-}
+// NOTE(alexander): this conflicts with my flykeys!!!
+// CUSTOM_COMMAND_SIG(casey_switch_to_keybinding_0)
+// CUSTOM_DOC("WENSLEYDALE.")
+// {
+//     switch_to_keybinding_0(app);
+//     global_hide_region_boundary = true;
+// }
 
-CUSTOM_COMMAND_SIG(casey_switch_to_keybinding_1)
-CUSTOM_DOC("STILTON.")
-{
-	switch_to_keybinding_1(app);
-	global_hide_region_boundary = false;
-}
+// CUSTOM_COMMAND_SIG(casey_switch_to_keybinding_1)
+// CUSTOM_DOC("STILTON.")
+// {
+//     switch_to_keybinding_1(app);
+//     global_hide_region_boundary = false;
+// }
 
 CUSTOM_COMMAND_SIG(casey_newline_and_indent)
 CUSTOM_DOC("Inserts a newline at the cursor position and indent the next line automatically.")

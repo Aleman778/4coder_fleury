@@ -444,7 +444,12 @@ typedef int socklen_t;
 #include "4coder_fleury_pos_context_tooltips.cpp"
 #include "4coder_fleury_code_peek.cpp"
 #include "4coder_fleury_recent_files.cpp"
+#include "4coder_aleman_base_commands.cpp"
+#if 1
+#include "4coder_aleman_flykeys.cpp"
+#else
 #include "4coder_fleury_bindings.cpp"
+#endif
 #include "4coder_fleury_base_commands.cpp"
 #if OS_WINDOWS
 #include "4coder_fleury_command_server.cpp"
@@ -486,10 +491,10 @@ void custom_layer_init(Application_Links *app)
         mapping_init(tctx, &framework_mapping);
         String_Const_u8 bindings_file = string_u8_litexpr("bindings.4coder");
         F4_SetAbsolutelyNecessaryBindings(&framework_mapping);
-        if(!dynamic_binding_load_from_file(app, &framework_mapping, bindings_file))
-        {
+        // if(!dynamic_binding_load_from_file(app, &framework_mapping, bindings_file))
+        // {
             F4_SetDefaultBindings(&framework_mapping);
-        }
+        // }
         F4_SetAbsolutelyNecessaryBindings(&framework_mapping);
     }
     

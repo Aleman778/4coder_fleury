@@ -1,0 +1,5 @@
+# Binaries
+*.so
+*.so.dSYM
+*.dll
+*.pdb
