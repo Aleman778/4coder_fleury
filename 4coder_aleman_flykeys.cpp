@@ -57,11 +57,12 @@ F4_ImplicitMap(Application_Links *app, String_ID lang, String_ID mode, Input_Eve
     Command_Map_ID map_id = global_command_map_ids[global_editor_mode];
     Command_Binding binding = map_get_binding_recursive(&framework_mapping, map_id, event);
 
-    if(!binding.custom) {
-        View_ID view = get_this_ctx_view(app, Access_Always);
-	Command_Map_ID orig_id = default_get_map_id(app, view);
-        binding = map_get_binding_recursive(&framework_mapping, orig_id, event);
-    }
+    // if(!binding.custom) {
+    //     Command_Map_ID global_map_id = (Command_Map_ID) vars_save_string_lit("keys_shared");
+    //     // View_ID view = get_this_ctx_view(app, Access_Always);
+    //     // Command_Map_ID orig_id = default_get_map_id(app, view);
+    //     binding = map_get_binding_recursive(&framework_mapping, global_map_id, event);
+    // }
 
     result.map = 0;
     result.command = binding.custom;
@@ -119,7 +120,6 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(move_right, KeyCode_Right);
     Bind(move_up, KeyCode_Up);
     Bind(move_down, KeyCode_Down);
-    Bind(exit_4coder, KeyCode_F4, KeyCode_Alt);
     Bind(project_fkey_command, KeyCode_F1);
     Bind(project_fkey_command, KeyCode_F2);
     Bind(project_fkey_command, KeyCode_F3);
@@ -183,7 +183,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     global_command_map_ids[EditorMode_Insert] = insert_mode_map_id;
     SelectMap(insert_mode_map_id);
     ParentMap(shared_map_id);
-    BindTextInput(fleury_write_text_and_auto_indent);
+    BindTextInput(f4_write_text_and_auto_indent);
     Bind(to_command_mode, KeyCode_Home);
 
     // NOTE(alexander): keys available after pressing leader key

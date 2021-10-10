@@ -493,7 +493,7 @@ void custom_layer_init(Application_Links *app)
         F4_SetAbsolutelyNecessaryBindings(&framework_mapping);
         // if(!dynamic_binding_load_from_file(app, &framework_mapping, bindings_file))
         // {
-            F4_SetDefaultBindings(&framework_mapping);
+        F4_SetDefaultBindings(&framework_mapping);
         // }
         F4_SetAbsolutelyNecessaryBindings(&framework_mapping);
     }
@@ -540,9 +540,43 @@ CUSTOM_DOC("Fleury startup event")
     }
     
     //~ NOTE(rjf): Default 4coder initialization.
-    String_Const_u8_Array file_names = input.event.core.file_names;
-    load_themes_default_folder(app);
-    default_4coder_initialize(app, file_names);
+    //~ NOTE(alexander): The code was moved out so that it doesn't mess up our bindings.
+    {
+        String_Const_u8_Array file_names = input.event.core.file_names;
+        load_themes_default_folder(app);
+
+        Scratch_Block scratch(app);
+
+        Face_Description description = get_face_description(app, 0);
+        load_config_and_apply(app, &global_config_arena, 
+                              description.parameters.pt_size,
+                              description.parameters.hinting);
+    
+        String_Const_u8 bindings_file_name = string_u8_litexpr("bindings.4coder");
+        String_Const_u8 mapping = def_get_config_string(scratch, vars_save_string_lit("mapping"));
+    
+        if (string_match(mapping, string_u8_litexpr("mac-default"))){
+            bindings_file_name = string_u8_litexpr("mac-bindings.4coder");
+        }
+        else if (OS_MAC && string_match(mapping, string_u8_litexpr("choose"))){
+            bindings_file_name = string_u8_litexpr("mac-bindings.4coder");
+        }
+
+        // open command line files
+        String_Const_u8 hot_directory = push_hot_directory(app, scratch);
+        for (i32 i = 0; i < file_names.count; i += 1){
+            Temp_Memory_Block temp(scratch);
+            String_Const_u8 input_name = file_names.vals[i];
+            String_Const_u8 full_name = push_u8_stringf(scratch, "%.*s/%.*s",
+                                                        string_expand(hot_directory),
+                                                        string_expand(input_name));
+            Buffer_ID new_buffer = create_buffer(app, full_name, BufferCreate_NeverNew|BufferCreate_MustAttachToFile);
+            if (new_buffer == 0){
+                create_buffer(app, input_name, 0);
+            }
+        }
+    }
+    
     
     //~ NOTE(rjf): Open special buffers.
     {
