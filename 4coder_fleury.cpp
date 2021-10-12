@@ -437,6 +437,12 @@ typedef int socklen_t;
 #include "4coder_fleury_error_annotations.cpp"
 #include "4coder_fleury_divider_comments.cpp"
 #include "4coder_fleury_power_mode.cpp"
+#include "4coder_aleman_base_commands.cpp"
+#if 1
+#include "4coder_aleman_flykeys.cpp"
+#else
+#include "4coder_fleury_bindings.cpp"
+#endif
 #include "4coder_fleury_cursor.cpp"
 #include "4coder_fleury_plot.cpp"
 #include "4coder_fleury_calc.cpp"
@@ -444,12 +450,6 @@ typedef int socklen_t;
 #include "4coder_fleury_pos_context_tooltips.cpp"
 #include "4coder_fleury_code_peek.cpp"
 #include "4coder_fleury_recent_files.cpp"
-#include "4coder_aleman_base_commands.cpp"
-#if 1
-#include "4coder_aleman_flykeys.cpp"
-#else
-#include "4coder_fleury_bindings.cpp"
-#endif
 #include "4coder_fleury_base_commands.cpp"
 #if OS_WINDOWS
 #include "4coder_fleury_command_server.cpp"

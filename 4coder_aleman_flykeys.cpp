@@ -13,7 +13,6 @@ enum Editor_Mode {
     EditorMode_Keymap_K,
     EditorMode_Keymap_D,
     EditorMode_Keymap_W,
-    
     EditorMode_Count,
 };
 
@@ -57,12 +56,9 @@ F4_ImplicitMap(Application_Links *app, String_ID lang, String_ID mode, Input_Eve
     Command_Map_ID map_id = global_command_map_ids[global_editor_mode];
     Command_Binding binding = map_get_binding_recursive(&framework_mapping, map_id, event);
 
-    // if(!binding.custom) {
-    //     Command_Map_ID global_map_id = (Command_Map_ID) vars_save_string_lit("keys_shared");
-    //     // View_ID view = get_this_ctx_view(app, Access_Always);
-    //     // Command_Map_ID orig_id = default_get_map_id(app, view);
-    //     binding = map_get_binding_recursive(&framework_mapping, global_map_id, event);
-    // }
+    if (binding.custom && global_editor_mode >= EditorMode_Leader) {
+        global_editor_mode = EditorMode_Command;
+    }
 
     result.map = 0;
     result.command = binding.custom;
@@ -75,9 +71,9 @@ F4_SetAbsolutelyNecessaryBindings(Mapping* mapping) {
     String_ID global_map_id = vars_save_string_lit("keys_global");
     String_ID file_map_id = vars_save_string_lit("keys_file");
     String_ID code_map_id = vars_save_string_lit("keys_code");
-
+    
     implicit_map_function = F4_ImplicitMap;
-
+    
     MappingScope();
     SelectMapping(mapping);
     
@@ -104,10 +100,10 @@ F4_SetAbsolutelyNecessaryBindings(Mapping* mapping) {
 function void
 F4_SetDefaultBindings(Mapping *mapping) {
     String_ID file_map_id = vars_save_string_lit("keys_file");
-
+    
     MappingScope();
     SelectMapping(mapping);
-
+    
     // NOTE(alexander): keys that are shared for both command and insert mode
     String_ID shared_map_id = vars_save_string_lit("keys_shared");
     SelectMap(shared_map_id);
@@ -136,7 +132,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(project_fkey_command, KeyCode_F14);
     Bind(project_fkey_command, KeyCode_F15);
     Bind(project_fkey_command, KeyCode_F16);
-
+    
     // NOTE(alexander): keys for command mode
     String_ID command_mode_map_id = vars_save_string_lit("command_mode");
     global_command_map_ids[EditorMode_Command] = command_mode_map_id;
@@ -186,6 +182,13 @@ F4_SetDefaultBindings(Mapping *mapping) {
     BindTextInput(f4_write_text_and_auto_indent);
     Bind(to_command_mode, KeyCode_Home);
 
+    // NOTE(alexander): keys for visual mode
+    String_ID visual_mode_map_id = vars_save_string_lit("visual_mode");
+    global_command_map_ids[EditorMode_Visual] = visual_mode_map_id;
+    SelectMap(visual_mode_map_id);
+    ParentMap(command_mode_map_id);
+    Bind(to_command_mode, KeyCode_Escape);
+
     // NOTE(alexander): keys available after pressing leader key
     String_ID leader_mode_map_id = vars_save_string_lit("leader_mode");
     global_command_map_ids[EditorMode_Leader] = leader_mode_map_id;
@@ -207,7 +210,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(project_f1key_command, KeyCode_P);
     Bind(save_all_dirty_buffers, KeyCode_Semicolon);
     BindTextInput(to_command_mode);
-
+    
     // NOTE(alexander): keys for i keymap
     String_ID keymap_i_map_id = vars_save_string_lit("i_keymap");
     global_command_map_ids[EditorMode_Keymap_I] = keymap_i_map_id;
@@ -218,7 +221,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(interactive_switch_buffer, KeyCode_D);
     Bind(open_matching_file_cpp, KeyCode_C);
     BindTextInput(to_command_mode);
-
+    
     // NOTE(alexander): keys for k keymap
     String_ID keymap_k_map_id = vars_save_string_lit("k_keymap");
     global_command_map_ids[EditorMode_Keymap_K] = keymap_k_map_id;
@@ -231,7 +234,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(query_replace_identifier, KeyCode_R);
     Bind(query_replace_selection, KeyCode_T);
     BindTextInput(to_command_mode);
-
+    
     // NOTE(alexander): keys for d keymap
     String_ID keymap_d_map_id = vars_save_string_lit("d_keymap");
     global_command_map_ids[EditorMode_Keymap_D] = keymap_d_map_id;
@@ -240,7 +243,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(write_todo, KeyCode_T);
     Bind(write_note, KeyCode_N);
     BindTextInput(to_command_mode);
- 
+    
     // NOTE(alexander): setup global state
     global_enable_flykeys = true;
     global_editor_mode = EditorMode_Command;

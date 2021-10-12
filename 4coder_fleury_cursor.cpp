@@ -135,145 +135,212 @@ DoTheCursorInterpolation(Application_Links *app, Frame_Info frame_info,
 }
 
 function void
+F4_Cursor_RenderCommandMode(Application_Links *app, View_ID view_id, b32 is_active_view,
+                            Buffer_ID buffer, Text_Layout_ID text_layout_id,
+                            f32 roundness, f32 outline_thickness)
+{
+    i32 cursor_sub_id = default_cursor_sub_id();
+    i64 cursor_pos = view_get_cursor_pos(app, view_id);
+    if (is_active_view){
+        draw_character_block(app, text_layout_id, cursor_pos, roundness,
+                             fcolor_id(defcolor_cursor, cursor_sub_id));
+        paint_text_color_pos(app, text_layout_id, cursor_pos,
+                             fcolor_id(defcolor_at_cursor));
+    }
+    else{
+        draw_character_wire_frame(app, text_layout_id, cursor_pos,
+                                  roundness, outline_thickness,
+                                  fcolor_id(defcolor_cursor, cursor_sub_id));
+    }
+}
+
+function void
+F4_Cursor_RenderInsertMode(Application_Links *app, View_ID view_id, b32 is_active_view,
+                           Buffer_ID buffer, Text_Layout_ID text_layout_id,
+                           f32 roundness) {
+    i32 cursor_sub_id = default_cursor_sub_id();
+    i64 cursor_pos = view_get_cursor_pos(app, view_id);
+    ARGB_Color color = fcolor_resolve(fcolor_id(defcolor_cursor, cursor_sub_id));
+    Rect_f32 rect = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+    rect.x1 = rect.x0 + 3.0f;
+    draw_rectangle(app, rect, 0.0f, color);
+}
+
+function void
+F4_Cursor_RenderVisualMode(Application_Links *app, View_ID view_id, b32 is_active_view,
+                           Buffer_ID buffer, Text_Layout_ID text_layout_id,
+                           f32 roundness, f32 outline_thickness)
+{
+    if (is_active_view) {
+        i64 cursor_pos = view_get_cursor_pos(app, view_id);
+        i64 mark_pos = view_get_mark_pos(app, view_id);
+        if (cursor_pos != mark_pos){
+            Range_i64 range = Ii64(cursor_pos, mark_pos);
+            draw_character_block(app, text_layout_id, range, roundness, fcolor_id(defcolor_highlight));
+            paint_text_color_fcolor(app, text_layout_id, range, fcolor_id(defcolor_at_highlight));
+        }
+    }
+    
+    F4_Cursor_RenderCommandMode(app, view_id, is_active_view, buffer,
+                                text_layout_id, roundness, outline_thickness);
+}
+
+function void
 F4_Cursor_RenderEmacsStyle(Application_Links *app, View_ID view_id, b32 is_active_view,
                            Buffer_ID buffer, Text_Layout_ID text_layout_id,
                            f32 roundness, f32 outline_thickness, Frame_Info frame_info)
 {
-    Rect_f32 view_rect = view_get_screen_rect(app, view_id);
-    Rect_f32 clip = draw_set_clip(app, view_rect);
-    Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
-    
-    b32 has_highlight_range = draw_highlight_range(app, view_id, buffer, text_layout_id, roundness);
-    
-    ColorFlags flags = 0;
-    flags |= !!global_keyboard_macro_is_recording * ColorFlag_Macro;
-    flags |= !!power_mode.enabled * ColorFlag_PowerMode;
-    ARGB_Color cursor_color = F4_GetColor(app, ColorCtx_Cursor(flags, GlobalKeybindingMode));
-    ARGB_Color mark_color = cursor_color;
-    ARGB_Color inactive_cursor_color = F4_ARGBFromID(active_color_table, fleury_color_cursor_inactive, 0);
-    
-    if(!F4_ARGBIsValid(inactive_cursor_color))
-    {
-        inactive_cursor_color = cursor_color;
+    switch (global_editor_mode) {
+        case EditorMode_Insert: {
+            F4_Cursor_RenderInsertMode(app, view_id, is_active_view, buffer, text_layout_id, roundness);
+        } break;
+
+        case EditorMode_Visual: {
+            F4_Cursor_RenderVisualMode(app, view_id, is_active_view, buffer, text_layout_id, roundness, outline_thickness);
+        } break;
+
+        default: {
+            F4_Cursor_RenderCommandMode(app, view_id, is_active_view, buffer, text_layout_id, roundness, outline_thickness);
+        } break;
+
     }
-    
-    if(is_active_view == 0)
-    {
-        cursor_color = inactive_cursor_color;
-        mark_color = inactive_cursor_color;
-    }
-	
-    // TODO(rjf): REMOVE THIS
-    {
-        i64 cursor_pos = view_get_cursor_pos(app, view_id);
-        i64 mark_pos = view_get_mark_pos(app, view_id);
-        global_cursor_positions[0] = cursor_pos;
-        global_mark_positions[0] = mark_pos;
-    }
-    
-    if(!has_highlight_range)
-    {
-        
-        for(int i = 0; i < 1/*global_cursor_count*/; ++i)
-        {
-            i64 cursor_pos = global_cursor_positions[0];
-            i64 mark_pos = global_mark_positions[0];
-            
-			Cursor_Type cursor_type = cursor_none;
-			Cursor_Type mark_type = cursor_none;
-			if(cursor_pos <= mark_pos)
-			{
-				cursor_type = cursor_open_range;
-				mark_type = cursor_close_range;
-			}
-			else
-			{
-				cursor_type = cursor_close_range;
-				mark_type = cursor_open_range;
-			}
-			
-			if(global_hide_region_boundary)
-			{
-				cursor_type = cursor_insert;
-				mark_type = cursor_none;
-			}
-            
-            Rect_f32 target_cursor = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
-            Rect_f32 target_mark = text_layout_character_on_screen(app, text_layout_id, mark_pos);
-			
-            // NOTE(rjf): Draw cursor.
-            {
-                if(is_active_view)
-                {
-                    
-                    if(cursor_pos < visible_range.start || cursor_pos > visible_range.end)
-                    {
-                        f32 width = target_cursor.x1 - target_cursor.x0;
-                        target_cursor.x0 = view_rect.x0;
-                        target_cursor.x1 = target_cursor.x0 + width;
-                    }
-                    
-                    DoTheCursorInterpolation(app, frame_info, &global_cursor_rect,
-                                             &global_last_cursor_rect, target_cursor);
-                    
-                    
-                    if(mark_pos > visible_range.end)
-                    {
-                        target_mark.x0 = 0;
-                        target_mark.y0 = view_rect.y1;
-                        target_mark.y1 = view_rect.y1;
-                    }
-                    
-                    if(mark_pos < visible_range.start || mark_pos > visible_range.end)
-                    {
-                        f32 width = target_mark.x1 - target_mark.x0;
-                        target_mark.x0 = view_rect.x0;
-                        target_mark.x1 = target_mark.x0 + width;
-                    }
-                    
-                    DoTheCursorInterpolation(app, frame_info, &global_mark_rect, &global_last_mark_rect,
-                                             target_mark);
-                }
-                
-                // NOTE(rjf): Draw main cursor.
-                {
-                    C4_RenderCursorSymbolThingy(app, global_cursor_rect, roundness, 4.f, cursor_color, cursor_type);
-					C4_RenderCursorSymbolThingy(app, target_cursor, roundness, 4.f, cursor_color, cursor_type);
-                }
-                
-                // NOTE(rjf): GLOW IT UP
-                for(int glow = 0; glow < 20; ++glow)
-                {
-                    f32 alpha = 0.1f - (power_mode.enabled ? (glow*0.005f) : (glow*0.015f));
-                    if(alpha > 0)
-                    {
-                        Rect_f32 glow_rect = target_cursor;
-                        glow_rect.x0 -= glow;
-                        glow_rect.y0 -= glow;
-                        glow_rect.x1 += glow;
-                        glow_rect.y1 += glow;
-                        C4_RenderCursorSymbolThingy(app, glow_rect, roundness + glow*0.7f, 2.f,
-                                                    fcolor_resolve(fcolor_change_alpha(fcolor_argb(cursor_color), alpha)), cursor_type);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                
-            }
-            
-            // paint_text_color_pos(app, text_layout_id, cursor_pos,
-            // fcolor_id(defcolor_at_cursor));
-            C4_RenderCursorSymbolThingy(app, global_mark_rect, roundness, 2.f,
-                                        fcolor_resolve(fcolor_change_alpha(fcolor_argb(mark_color), 0.5f)), mark_type);
-			C4_RenderCursorSymbolThingy(app, target_mark, roundness, 2.f,
-                                        fcolor_resolve(fcolor_change_alpha(fcolor_argb(mark_color), 0.75f)), mark_type);
-        }
-    }
-    
-    draw_set_clip(app, clip);
 }
+    
+    // Rect_f32 view_rect = view_get_screen_rect(app, view_id);
+    // Rect_f32 clip = draw_set_clip(app, view_rect);
+    // Range_i64 visible_range = text_layout_get_visible_range(app, text_layout_id);
+    
+    // b32 has_highlight_range = draw_highlight_range(app, view_id, buffer, text_layout_id, roundness);
+    
+    // ColorFlags flags = 0;
+    // flags |= !!global_keyboard_macro_is_recording * ColorFlag_Macro;
+    // flags |= !!power_mode.enabled * ColorFlag_PowerMode;
+    // ARGB_Color cursor_color = F4_GetColor(app, ColorCtx_Cursor(flags, GlobalKeybindingMode));
+    // ARGB_Color mark_color = cursor_color;
+    // ARGB_Color inactive_cursor_color = F4_ARGBFromID(active_color_table, fleury_color_cursor_inactive, 0);
+    
+    // if(!F4_ARGBIsValid(inactive_cursor_color))
+    // {
+    //     inactive_cursor_color = cursor_color;
+    // }
+    
+    // if(is_active_view == 0)
+    // {
+    //     cursor_color = inactive_cursor_color;
+    //     mark_color = inactive_cursor_color;
+    // }
+	
+    // // TODO(rjf): REMOVE THIS
+    // {
+    //     i64 cursor_pos = view_get_cursor_pos(app, view_id);
+    //     i64 mark_pos = view_get_mark_pos(app, view_id);
+    //     global_cursor_positions[0] = cursor_pos;
+    //     global_mark_positions[0] = mark_pos;
+    // }
+    
+    // if(!has_highlight_range)
+    // {
+        
+    //     for(int i = 0; i < 1/*global_cursor_count*/; ++i)
+    //     {
+    //         i64 cursor_pos = global_cursor_positions[0];
+    //         i64 mark_pos = global_mark_positions[0];
+            
+    //     		Cursor_Type cursor_type = cursor_none;
+    //     		Cursor_Type mark_type = cursor_none;
+    //     		if(cursor_pos <= mark_pos)
+    //     		{
+    //     			cursor_type = cursor_open_range;
+    //     			mark_type = cursor_close_range;
+    //     		}
+    //     		else
+    //     		{
+    //     			cursor_type = cursor_close_range;
+    //     			mark_type = cursor_open_range;
+    //     		}
+			
+    //     		if(global_hide_region_boundary)
+    //     		{
+    //     			cursor_type = cursor_insert;
+    //     			mark_type = cursor_none;
+    //     		}
+            
+    //         Rect_f32 target_cursor = text_layout_character_on_screen(app, text_layout_id, cursor_pos);
+    //         Rect_f32 target_mark = text_layout_character_on_screen(app, text_layout_id, mark_pos);
+			
+    //         // NOTE(rjf): Draw cursor.
+    //         {
+    //             if(is_active_view)
+    //             {
+                    
+    //                 if(cursor_pos < visible_range.start || cursor_pos > visible_range.end)
+    //                 {
+    //                     f32 width = target_cursor.x1 - target_cursor.x0;
+    //                     target_cursor.x0 = view_rect.x0;
+    //                     target_cursor.x1 = target_cursor.x0 + width;
+    //                 }
+                    
+    //                 DoTheCursorInterpolation(app, frame_info, &global_cursor_rect,
+    //                                          &global_last_cursor_rect, target_cursor);
+                    
+                    
+    //                 if(mark_pos > visible_range.end)
+    //                 {
+    //                     target_mark.x0 = 0;
+    //                     target_mark.y0 = view_rect.y1;
+    //                     target_mark.y1 = view_rect.y1;
+    //                 }
+                    
+    //                 if(mark_pos < visible_range.start || mark_pos > visible_range.end)
+    //                 {
+    //                     f32 width = target_mark.x1 - target_mark.x0;
+    //                     target_mark.x0 = view_rect.x0;
+    //                     target_mark.x1 = target_mark.x0 + width;
+    //                 }
+                    
+    //                 DoTheCursorInterpolation(app, frame_info, &global_mark_rect, &global_last_mark_rect,
+    //                                          target_mark);
+    //             }
+                
+    //             // NOTE(rjf): Draw main cursor.
+    //             {
+    //                 C4_RenderCursorSymbolThingy(app, global_cursor_rect, roundness, 4.f, cursor_color, cursor_type);
+    //     				C4_RenderCursorSymbolThingy(app, target_cursor, roundness, 4.f, cursor_color, cursor_type);
+    //             }
+                
+    //             // NOTE(rjf): GLOW IT UP
+    //             for(int glow = 0; glow < 20; ++glow)
+    //             {
+    //                 f32 alpha = 0.1f - (power_mode.enabled ? (glow*0.005f) : (glow*0.015f));
+    //                 if(alpha > 0)
+    //                 {
+    //                     Rect_f32 glow_rect = target_cursor;
+    //                     glow_rect.x0 -= glow;
+    //                     glow_rect.y0 -= glow;
+    //                     glow_rect.x1 += glow;
+    //                     glow_rect.y1 += glow;
+    //                     C4_RenderCursorSymbolThingy(app, glow_rect, roundness + glow*0.7f, 2.f,
+    //                                                 fcolor_resolve(fcolor_change_alpha(fcolor_argb(cursor_color), alpha)), cursor_type);
+    //                 }
+    //                 else
+    //                 {
+    //                     break;
+    //                 }
+    //             }
+                
+    //         }
+            
+    //         // paint_text_color_pos(app, text_layout_id, cursor_pos,
+    //         // fcolor_id(defcolor_at_cursor));
+    //         C4_RenderCursorSymbolThingy(app, global_mark_rect, roundness, 2.f,
+    //                                     fcolor_resolve(fcolor_change_alpha(fcolor_argb(mark_color), 0.5f)), mark_type);
+    //     		C4_RenderCursorSymbolThingy(app, target_mark, roundness, 2.f,
+    //                                     fcolor_resolve(fcolor_change_alpha(fcolor_argb(mark_color), 0.75f)), mark_type);
+    //     }
+    // }
+    
+    // draw_set_clip(app, clip);
+//}
 
 internal b32
 F4_Cursor_DrawHighlightRange(Application_Links *app, View_ID view_id,
