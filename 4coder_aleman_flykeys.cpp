@@ -55,11 +55,11 @@ F4_ImplicitMap(Application_Links *app, String_ID lang, String_ID mode, Input_Eve
     
     Command_Map_ID map_id = global_command_map_ids[global_editor_mode];
     Command_Binding binding = map_get_binding_recursive(&framework_mapping, map_id, event);
-
+    
     if (binding.custom && global_editor_mode >= EditorMode_Leader) {
         global_editor_mode = EditorMode_Command;
     }
-
+    
     result.map = 0;
     result.command = binding.custom;
     return result;
@@ -173,7 +173,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(search, KeyCode_N);
     Bind(change_active_panel, KeyCode_Comma);
     Bind(change_active_panel_backwards, KeyCode_Period);
-
+    
     // NOTE(alexander): keys for insert mode
     String_ID insert_mode_map_id = vars_save_string_lit("insert_mode");
     global_command_map_ids[EditorMode_Insert] = insert_mode_map_id;
@@ -181,14 +181,14 @@ F4_SetDefaultBindings(Mapping *mapping) {
     ParentMap(shared_map_id);
     BindTextInput(f4_write_text_and_auto_indent);
     Bind(to_command_mode, KeyCode_Home);
-
+    
     // NOTE(alexander): keys for visual mode
     String_ID visual_mode_map_id = vars_save_string_lit("visual_mode");
     global_command_map_ids[EditorMode_Visual] = visual_mode_map_id;
     SelectMap(visual_mode_map_id);
     ParentMap(command_mode_map_id);
     Bind(to_command_mode, KeyCode_Escape);
-
+    
     // NOTE(alexander): keys available after pressing leader key
     String_ID leader_mode_map_id = vars_save_string_lit("leader_mode");
     global_command_map_ids[EditorMode_Leader] = leader_mode_map_id;
@@ -242,6 +242,8 @@ F4_SetDefaultBindings(Mapping *mapping) {
     ParentMap(file_map_id);
     Bind(write_todo, KeyCode_T);
     Bind(write_note, KeyCode_N);
+    Bind(jump_to_definition_at_cursor, KeyCode_P);
+    Bind(jump_to_definition, KeyCode_O);
     BindTextInput(to_command_mode);
     
     // NOTE(alexander): setup global state
