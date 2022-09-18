@@ -13,6 +13,7 @@ enum Editor_Mode {
     EditorMode_Keymap_K,
     EditorMode_Keymap_D,
     EditorMode_Keymap_W,
+    EditorMode_Keymap_O,
     EditorMode_Count,
 };
 
@@ -47,6 +48,10 @@ CUSTOM_COMMAND_SIG(to_k_keymap) {
 
 CUSTOM_COMMAND_SIG(to_d_keymap) {
     global_editor_mode = EditorMode_Keymap_D;
+}
+
+CUSTOM_COMMAND_SIG(to_o_keymap) {
+    global_editor_mode = EditorMode_Keymap_O;
 }
 
 function Implicit_Map_Result
@@ -200,6 +205,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(to_i_keymap, KeyCode_I);
     Bind(to_k_keymap, KeyCode_K);
     Bind(to_d_keymap, KeyCode_D);
+    Bind(to_o_keymap, KeyCode_O);
     
     Bind(close_panel, KeyCode_3);
     Bind(open_panel_vsplit, KeyCode_4);
@@ -242,8 +248,20 @@ F4_SetDefaultBindings(Mapping *mapping) {
     ParentMap(file_map_id);
     Bind(write_todo, KeyCode_T);
     Bind(write_note, KeyCode_N);
+    Bind(jump_to_last_point, KeyCode_I);
     Bind(jump_to_definition_at_cursor, KeyCode_P);
     Bind(jump_to_definition, KeyCode_O);
+    BindTextInput(to_command_mode);
+    
+    // NOTE(alexander): keys for o keymap
+    String_ID keymap_o_map_id = vars_save_string_lit("o_keymap");
+    global_command_map_ids[EditorMode_Keymap_O] = keymap_o_map_id;
+    SelectMap(keymap_o_map_id);
+    ParentMap(file_map_id);
+    
+    Bind(keyboard_macro_start_recording, KeyCode_E);
+    Bind(keyboard_macro_finish_recording, KeyCode_R);
+    Bind(keyboard_macro_replay, KeyCode_T);
     BindTextInput(to_command_mode);
     
     // NOTE(alexander): setup global state

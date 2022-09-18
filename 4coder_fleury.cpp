@@ -734,25 +734,7 @@ CUSTOM_DOC("Fleury startup event")
         
         // NOTE(rjf): Small code font.
         {
-            Face_Description normal_code_desc = get_face_description(app, get_face_id(app, 0));
-            
-            Face_Description desc = {0};
-            {
-                desc.font.file_name =  push_u8_stringf(scratch, "%.*sfonts/Inconsolata-Regular.ttf", string_expand(bin_path));
-                desc.parameters.pt_size = normal_code_desc.parameters.pt_size - 1;
-                desc.parameters.bold = 1;
-                desc.parameters.italic = 1;
-                desc.parameters.hinting = 0;
-            }
-            
-            if(IsFileReadable(desc.font.file_name))
-            {
-                global_small_code_face = try_create_new_face(app, &desc);
-            }
-            else
-            {
-                global_small_code_face = face_that_should_totally_be_there;
-            }
+            global_small_code_face = face_that_should_totally_be_there;
         }
     }
     
