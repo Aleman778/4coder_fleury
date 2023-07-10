@@ -3,7 +3,6 @@
 // Keymaps are just a set of commands that can be accessed only once you have entered a map.
 // The goal is to never require you to press controll or alt key which can be more ergonomic
 // and put less strain on you hand.
-
 enum Editor_Mode {
     EditorMode_Command,
     EditorMode_Insert,
@@ -251,6 +250,7 @@ F4_SetDefaultBindings(Mapping *mapping) {
     Bind(jump_to_last_point, KeyCode_I);
     Bind(jump_to_definition_at_cursor, KeyCode_P);
     Bind(jump_to_definition, KeyCode_O);
+    Bind(casey_find_matching_file, KeyCode_M);
     BindTextInput(to_command_mode);
     
     // NOTE(alexander): keys for o keymap

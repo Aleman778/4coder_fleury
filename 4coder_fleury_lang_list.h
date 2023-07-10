@@ -18,7 +18,7 @@ F4_RegisterLanguages(void)
     {
         String_Const_u8 extensions[] =
         {
-            S8Lit("cpp"), S8Lit("cc"), S8Lit("c"), S8Lit("cxx"),
+            S8Lit("cpp"), S8Lit("sq"), S8Lit("cc"), S8Lit("c"), S8Lit("cxx"),
             S8Lit("C"), S8Lit("h"), S8Lit("hpp"),
         };
         for(int i = 0; i < ArrayCount(extensions); i += 1)
