@@ -382,8 +382,8 @@ F4_DrawFileBar(Application_Links *app, View_ID view_id, Buffer_ID buffer, Face_I
         push_fancy_string(scratch, &list, pop2_color, str.string);
     }
     
-    push_fancy_string(scratch, &list, base_color, S8Lit(" Syntax Mode: "));
-    push_fancy_string(scratch, &list, base_color, F4_SyntaxOptionString());
+    //push_fancy_string(scratch, &list, base_color, S8Lit(" Syntax Mode: "));
+    //push_fancy_string(scratch, &list, base_color, F4_SyntaxOptionString());
     
     Vec2_f32 p = bar.p0 + V2f32(2.f, 2.f);
     draw_fancy_line(app, face_id, fcolor_zero(), &list, p);
